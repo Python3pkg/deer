@@ -33,6 +33,7 @@ class NN():
         layers=[]
         outs_conv=[]
         outs_conv_shapes=[]
+        params=[]
         
         for i, dim in enumerate(self._input_dimensions):
             nfilter=[]
@@ -65,22 +66,23 @@ class NN():
                     nfilter.append(8)
                     stride_size=1
 
-                    conv1_weights = tf.Variable(
-                        tf.truncated_normal([fR, fC, 1, nfilter[0]],
-                                            stddev=0.1,
-                                            seed=self._random_state.randint(-1024,1024) ))
-                    conv1_biases = tf.Variable(tf.zeros([nfilter[0]]))
-
-                    conv = tf.nn.conv2d(tf.reshape(inputs[i],[-1,1,dim[0],1]),
-                                        filter=conv1_weights,
-                                        strides=[stride_size, stride_size, 1, 1],
-                                        padding='VALID')
-
-                    # Bias and rectified linear non-linearity.
-                    relu = tf.nn.relu(tf.nn.bias_add(conv, conv1_biases))
+                    with tf.name_scope('conv1'):
+                        weights = tf.Variable(
+                            tf.truncated_normal([fR, fC, 1, nfilter[0]],
+                                                stddev=0.1,
+                                                seed=self._random_state.randint(-1024,1024) ))
+                        biases = tf.Variable(tf.zeros([nfilter[0]]))
+                        
+                        conv = tf.nn.conv2d(tf.reshape(inputs[i],[-1,1,dim[0],1]),
+                                            filter=weights,
+                                            strides=[stride_size, stride_size, 1, 1],
+                                            padding='VALID')
+                        
+                        # Bias and rectified linear non-linearity.
+                        conv1 = tf.nn.relu(tf.nn.bias_add(conv, biases))
                     
-                    layers.append(conv)
-                    layers.append(relu)
+                    layers.append(conv1)
+                    params.extend([weights, biases])
                     
                     
                     newC = (newC - fC + 1 - pC) // stride_size + 1  # stride 2
@@ -92,26 +94,26 @@ class NN():
                     nfilter.append(8)
                     stride_size=1
                     
-                    conv2_weights = tf.Variable(
-                        tf.truncated_normal([fR, fC, nfilter[0], nfilter[1]],  # 5x5 filter, depth 32.
-                                            stddev=0.1,
-                                            seed=self._random_state.randint(-1024,1024) ))
-                    conv2_biases = tf.Variable(tf.zeros([nfilter[1]]))
-
-                    conv = tf.nn.conv2d(relu,
-                                        filter=conv2_weights,
-                                        strides=[stride_size, stride_size, 1, 1],
-                                        padding='VALID')
-
-                    # Bias and rectified linear non-linearity.
-                    relu = tf.nn.relu(tf.nn.bias_add(conv, conv2_biases))
+                    with tf.name_scope('conv2'):
+                        weights = tf.Variable(
+                            tf.truncated_normal([fR, fC, nfilter[0], nfilter[1]],
+                                                stddev=0.1,
+                                                seed=self._random_state.randint(-1024,1024) ))
+                        biases = tf.Variable(tf.zeros([nfilter[1]]))
+                        
+                        conv = tf.nn.conv2d(conv1,
+                                            filter=weights,
+                                            strides=[stride_size, stride_size, 1, 1],
+                                            padding='VALID')
+                        
+                        # Bias and rectified linear non-linearity.
+                        conv2 = tf.nn.relu(tf.nn.bias_add(conv, biases))
                     
-                    layers.append(conv)
-                    layers.append(relu)
+                    layers.append(conv2)
+                    params.extend([weights, biases])
 
                     
                     newC = (newC - fC + 1 - pC) // stride_size + 1  # stride 2
-                    print nfilter[1],newC
                     outs_conv_shapes.append((nfilter[1],newC))
                     outs_conv.append(conv)
                     
@@ -124,15 +126,13 @@ class NN():
         
         
         ## Custom merge of layers
-        print outs_conv_shapes
-        output_conv = tf.reshape( outs_conv[0] , (self._batch_size, np.prod(outs_conv_shapes[0])) )
+        output_conv = tf.reshape( outs_conv[0] , [-1, np.prod(outs_conv_shapes[0])] )#(None, np.prod(outs_conv_shapes[0])) )
         shapes=np.prod(outs_conv_shapes[0])
 
         if (len(outs_conv)>1):
             for out_conv,out_conv_shape in zip(outs_conv[1:],outs_conv_shapes[1:]):
-                output_conv=tf.concat(1, (output_conv, tf.reshape( out_conv, (self._batch_size, np.prod(out_conv_shape)) ) ))#, axis=1))
+                output_conv=tf.concat(1, (output_conv, tf.reshape( out_conv , [-1, np.prod(out_conv_shape)] )) )#, axis=1))
                 shapes+=np.prod(out_conv_shape)
-                shapes
                 
         # Hidden 1
         hidden1_units=50
@@ -145,6 +145,7 @@ class NN():
                                  name='biases')
             hidden1 = tf.nn.relu(tf.matmul(output_conv, weights) + biases)
         layers.append(hidden1)
+        params.extend([weights, biases])
 
         # Hidden 2
         hidden2_units=20
@@ -157,6 +158,7 @@ class NN():
                                  name='biases')
             hidden2 = tf.nn.relu(tf.matmul(hidden1, weights) + biases)
         layers.append(hidden2)
+        params.extend([weights, biases])
 
 
         # outLayer
@@ -167,11 +169,11 @@ class NN():
                 name='weights')
             biases = tf.Variable(tf.zeros([self._n_actions]),
                                  name='biases')
-            out = tf.nn.relu(tf.matmul(hidden2, weights) + biases)
+            out = tf.matmul(hidden2, weights) + biases
         layers.append(out)
+        params.extend([weights, biases])
 
-        
-        return out#.output#, params, outs_conv_shapes
+        return out, params, outs_conv_shapes
 
 if __name__ == '__main__':
     pass

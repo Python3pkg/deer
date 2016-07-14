@@ -12,7 +12,7 @@ import copy
 
 class MyQNetwork(QNetwork):
     """
-    Deep Q-learning network using Theano
+    Deep Q-learning network using tensorflow
     
     Parameters
     -----------
@@ -40,7 +40,7 @@ class MyQNetwork(QNetwork):
         Activate or not the double_Q learning.
         More informations in : Hado van Hasselt et al. (2015) - Deep Reinforcement Learning with Double Q-learning.
     neural_network : object, optional
-        default is deer.qnetworks.NN_keras
+        default is deer.qnetworks.NN_tensorflow
     """
 
     def __init__(self, environment, rho=0.9, rms_epsilon=0.0001, momentum=None, clip_delta=0, freeze_interval=1000, batch_size=32, network_type=None, update_rule="rmsprop", batch_accumulator="sum", random_state=np.random.RandomState(), double_Q=False, neural_network=NN):
@@ -48,13 +48,12 @@ class MyQNetwork(QNetwork):
         
         """
         QNetwork.__init__(self,environment, batch_size)
-
         
-        self.rho = rho
-        self.rms_epsilon = rms_epsilon
-        self.momentum = momentum
-        self.clip_delta = clip_delta
-        self.freeze_interval = freeze_interval
+        self._rho = rho
+        self._rms_epsilon = rms_epsilon
+        self._momentum = momentum
+        self._clip_delta = clip_delta
+        self._freeze_interval = freeze_interval
         self._double_Q = double_Q
         self._random_state = random_state
         self.update_counter = 0
@@ -66,7 +65,6 @@ class MyQNetwork(QNetwork):
         self.next_states_shared=[] # idem that self.states_shared at t+1
 
         for i, dim in enumerate(self._input_dimensions):
-            print dim
             if len(dim) == 3:
                 self.states.append( tf.placeholder(tf.float32, [None, dim[1], dim[2], dim[0]]) ) #BATCH_SIZE, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS
                 self.next_states.append( tf.placeholder(tf.float32, [None, dim[0], dim[1], dim[2]]) )
@@ -83,21 +81,40 @@ class MyQNetwork(QNetwork):
         print("For each observation, historySize + ponctualObs_i.shape: {}".format(self._input_dimensions))
 
         QNet=neural_network(self._batch_size, self._input_dimensions, self._n_actions, self._random_state)
-        self.q_vals = QNet._buildDQN(self.states)#, self.params, shape_after_conv = QNet._buildDQN(states)
+        self.q_vals, self.params, shape_after_conv = QNet._buildDQN(self.states)#, self.params, shape_after_conv = QNet._buildDQN(states)
+
+        print("Number of neurons after spatial and temporal convolution layers: {}".format(shape_after_conv))
         
-        self.next_q_vals = QNet._buildDQN(self.next_states)
+        self.next_q_vals, self.next_params, shape_after_conv = QNet._buildDQN(self.next_states)
         
-        #self._resetQHat() # FIXME        
+        self.target_q_vals=tf.placeholder(tf.float32, self.next_q_vals.get_shape())
         
+        self.loss = tf.reduce_sum(tf.square(self.q_vals - self.target_q_vals))/batch_size #tf.reduce_mean(tf.square(self.q_vals - self.target_q_vals)) #loss = tf.nn.l2_loss(diff)
+        
+        if update_rule == 'rmsprop':
+            optimizer = tf.train.RMSPropOptimizer(self._lr, self._rho, self._momentum, self._rms_epsilon)
+
+        elif update_rule == 'sgd':
+            optimizer = tf.train.GradientDescentOptimizer(self._lr)
+        else:
+            raise ValueError("Unrecognized update: {}".format(update_rule))
+    
+
+        
+        self.performGD = optimizer.minimize(self.loss)
+
         #init_op = tf.initialize_all_variables()
+        tf.set_random_seed(random_state.randint(1024))
         self.sess = tf.Session()
         self.sess.run(tf.initialize_all_variables())
+        self._resetQHat()        
         
-    def toDump(self):
-        # FIXME
-
-        return None,None
-
+#    def getAllParams(self):
+#        #FIXME
+#        
+#    def setAllParams(self, list_of_values):
+#        #FIXME
+        
     def train(self, states_val, actions_val, rewards_val, next_states_val, terminals_val):
         """
         Train one batch.
@@ -119,21 +136,11 @@ class MyQNetwork(QNetwork):
         average loss of the batch training
         """
         
-        #if self.update_counter % self._freeze_interval == 0: #FIXME
-        #    self._resetQHat()
+        if self.update_counter % self._freeze_interval == 0: #FIXME
+            self._resetQHat()
         
-        #feed_dict = {x: [your_image]}
-#        with tf.Session() as sess:
-#            tf.initialize_all_variables().run()
         next_q_vals = self.sess.run(self.next_q_vals,feed_dict={self.next_states[0]:next_states_val[0], self.next_states[1]:next_states_val[1]})
         
-        print "next_q_vals"
-        print next_q_vals
-        
-        #FIXME        
-#        if(self._double_Q==True):
-#        else:
-
         max_next_q_vals=np.max(next_q_vals, axis=1, keepdims=True)
 
         not_terminals=np.ones_like(terminals_val) - terminals_val
@@ -142,30 +149,21 @@ class MyQNetwork(QNetwork):
                 
         q_vals = self.sess.run(self.q_vals,feed_dict={self.states[0]:states_val[0], self.states[1]:states_val[1]})
 
-        print "q_vals before"
-        print q_vals
-
         q_val = q_vals[  np.arange(self._batch_size), actions_val.reshape((-1,))  ]
 
-        print q_val
         diff = - q_val + target
-        print "diff"       
-        print diff        
 
-        q_vals_copy=copy(q_vals)
-        q_vals[  np.arange(self._batch_size), actions_val.reshape((-1,))  ] = target
-        print "q_vals after"
-        print q_vals
-        print q_vals_copy
-
-#        # Minimize the squared errors.
-#        loss = tf.nn.l2_loss(diff) #tf.reduce_mean(tf.square(self.next_q_vals - q_vals))
-#        optimizer = tf.train.GradientDescentOptimizer(0.5)
-#        train = optimizer.minimize(loss)
+        q_vals_copy=np.array(copy.deepcopy(q_vals)).astype(np.float32)   
         
-        print loss
+        q_vals_copy[  np.arange(self._batch_size), actions_val.reshape((-1,))  ] = target
+
+        self.sess.run(self.performGD,feed_dict={self.target_q_vals:q_vals_copy, self.states[0]:states_val[0], self.states[1]:states_val[1]})
         
         self.update_counter += 1
+        
+        loss_ind=np.square(diff)
+
+        return np.average(loss_ind),loss_ind
 
 
 #        # Full tensorflow impossible?
@@ -178,3 +176,37 @@ class MyQNetwork(QNetwork):
 #        
 #        q_val=tf.reshape( self.q_vals[ tf.constant(np.arange(batch_size)), tf.reshape(actions,[32])] , [-1, 1] )
 #        diff = - q_val + target
+
+    def qValues(self, state_val):
+        """ Get the q values for a belief state
+
+        Arguments
+        ---------
+        state_val : one belief state
+
+        Returns
+        -------
+        The q value for the provided belief state
+        """ 
+        
+        return self.sess.run(self.q_vals,feed_dict={self.states[0]:np.expand_dims(state_val[0],axis=0), self.states[1]:np.expand_dims(state_val[1],axis=0)})[0]
+
+    def chooseBestAction(self, state):
+        """ Get the best action for a belief state
+
+        Arguments
+        ---------
+        state : one belief state
+
+        Returns
+        -------
+        The best action : int
+        """        
+        q_vals = self.qValues(state)
+
+        return np.argmax(q_vals)
+        
+    def _resetQHat(self):
+        for i,(param,next_param) in enumerate(zip(self.params, self.next_params)):
+            self.sess.run( next_param.assign(param) )
+
