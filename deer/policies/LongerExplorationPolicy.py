@@ -59,7 +59,7 @@ class LongerExplorationPolicy(Policy):
     def sampleUniformActionSequence(self):
         if ( isinstance(self.n_actions,int)):
             """ Sample an action sequence of length self._l, where the unordered sequences have uniform probabilities"""
-            actions_list = range(self.n_actions)
+            actions_list = list(range(self.n_actions))
         else:   
             """For N exploration steps, the goal is to have actions such that their sum spans quite uniformly 
             the whole range of possibilities. Among those possibilities, random choice/order of actions. """

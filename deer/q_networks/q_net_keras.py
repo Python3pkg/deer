@@ -179,5 +179,5 @@ class MyQNetwork(QNetwork):
         self.q_vals.compile(optimizer=optimizer, loss='mse')
 
     def _resetQHat(self):
-        for i,(param,next_param) in enumerate(zip(self.params, self.next_params)):
+        for i,(param,next_param) in enumerate(list(zip(self.params, self.next_params))):
             K.set_value(next_param,K.get_value(param))

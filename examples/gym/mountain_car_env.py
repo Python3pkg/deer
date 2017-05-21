@@ -85,7 +85,7 @@ def main():
     rng = np.random.RandomState(123456)
     myenv=MyEnv(rng)
 
-    print (myenv.observe())
+    print((myenv.observe()))
     
 if __name__ == "__main__":
     main()

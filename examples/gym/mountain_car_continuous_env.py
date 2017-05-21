@@ -75,16 +75,16 @@ def main():
     # This function can be used for debug purposes
     rng = np.random.RandomState(123456)
     myenv=MyEnv(rng)
-    print(myenv.env.action_space)
-    print(myenv.env.action_space.low)
-    print(myenv.env.action_space.high)    
-    print(myenv.env.observation_space)
+    print((myenv.env.action_space))
+    print((myenv.env.action_space.low))
+    print((myenv.env.action_space.high))    
+    print((myenv.env.observation_space))
     
-    print (myenv.observe())
+    print((myenv.observe()))
     myenv.act([0])
-    print (myenv.observe())
+    print((myenv.observe()))
     myenv.act([1])
-    print (myenv.observe())
+    print((myenv.observe()))
     
     
 if __name__ == "__main__":

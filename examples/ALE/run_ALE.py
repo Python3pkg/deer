@@ -99,8 +99,8 @@ if __name__ == "__main__":
     # --- Create unique filename for FindBestController ---
     h = hash(vars(parameters), hash_name="sha1")
     fname = "ALE_" + h
-    print("The parameters hash is: {}".format(h))
-    print("The parameters are: {}".format(parameters))
+    print(("The parameters hash is: {}".format(h)))
+    print(("The parameters are: {}".format(parameters)))
 
     # --- Bind controllers to the agent ---
     # Before every training epoch (periodicity=1), we want to print a summary of the agent's epsilon, discount and 
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     # --- Show results ---
     basename = "scores/" + fname
     scores = load(basename + "_scores.jldump")
-    plt.plot(range(1, len(scores['vs'])+1), scores['vs'], label="VS", color='b')
+    plt.plot(list(range(1, len(scores['vs'])+1)), scores['vs'], label="VS", color='b')
     plt.legend()
     plt.xlabel("Number of epochs")
     plt.ylabel("Score")

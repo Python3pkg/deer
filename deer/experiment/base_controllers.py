@@ -349,7 +349,7 @@ class InterleavedTestEpochController(Controller):
             self._summary_counter += 1
             if self._show_score:
                 score,nbr_episodes=agent.totalRewardOverLastTest()
-                print("Testing score per episode (id: {}) is {} (average over {} episode(s))".format(self._id, score, nbr_episodes))
+                print(("Testing score per episode (id: {}) is {} (average over {} episode(s))".format(self._id, score, nbr_episodes)))
             if self._summary_periodicity > 0 and self._summary_counter % self._summary_periodicity == 0:
                 agent.summarizeTestPerformance()
             agent.resumeTrainingMode()
@@ -401,8 +401,8 @@ class TrainerController(Controller):
         if self._on_episode:
             self._update(agent)
 
-        if self._show_avg_Bellman_residual: print("Average (on the epoch) training loss: {}".format(agent.avgBellmanResidual()))
-        if self._show_episode_avg_V_value: print("Episode average V value: {}".format(agent.avgEpisodeVValue())) # (on non-random action time-steps)
+        if self._show_avg_Bellman_residual: print(("Average (on the epoch) training loss: {}".format(agent.avgBellmanResidual())))
+        if self._show_episode_avg_V_value: print(("Episode average V value: {}".format(agent.avgEpisodeVValue()))) # (on non-random action time-steps)
 
     def onEpochEnd(self, agent):
         if (self._active == False):
@@ -487,10 +487,10 @@ class VerboseController(Controller):
 
     def _print(self, agent):
         if self._periodicity <= 1 or self._count % self._periodicity == 0:
-            print("{} {}:".format(self._string, self._count + 1))
-            print("Learning rate: {}".format(agent._network.learningRate()))
-            print("Discount factor: {}".format(agent._network.discountFactor()))
-            print("Epsilon: {}".format(agent._train_policy.epsilon()))
+            print(("{} {}:".format(self._string, self._count + 1)))
+            print(("Learning rate: {}".format(agent._network.learningRate())))
+            print(("Discount factor: {}".format(agent._network.discountFactor())))
+            print(("Epsilon: {}".format(agent._train_policy.epsilon())))
         self._count += 1
 
 class FindBestController(Controller):
@@ -559,9 +559,9 @@ class FindBestController(Controller):
             return
 
         bestIndex = np.argmax(self._validationScores)
-        print("Best neural net obtained after {} epochs, with validation score {}".format(bestIndex+1, self._validationScores[bestIndex]))
+        print(("Best neural net obtained after {} epochs, with validation score {}".format(bestIndex+1, self._validationScores[bestIndex])))
         if self._testID != None:
-            print("Test score of this neural net: {}".format(self._testScores[bestIndex]))
+            print(("Test score of this neural net: {}".format(self._testScores[bestIndex])))
                 
         try:
             os.mkdir("scores")

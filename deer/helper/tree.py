@@ -233,7 +233,7 @@ class SumTree:
     def _printTree(self, node):
         if(node != None):
             self._printTree(node.left)
-            print(node.position, node.priority)
+            print((node.position, node.priority))
             self._printTree(node.right)
         
 
@@ -248,6 +248,6 @@ if __name__ == "__main__":
 
     rng = np.random.RandomState()
     for _ in range(10):
-        print(t.getBatch(10, rng))
+        print((t.getBatch(10, rng)))
 
 

@@ -82,8 +82,8 @@ class MyQNetwork(QNetwork):
             self.states_shared.append(theano.shared(np.zeros((batch_size,) + dim, dtype=theano.config.floatX) , borrow=False))
             self.next_states_shared.append(theano.shared(np.zeros((batch_size,) + dim, dtype=theano.config.floatX) , borrow=False))
         
-        print("Number of observations per state: {}".format(len(self.states_shared)))
-        print("For each observation, historySize + ponctualObs_i.shape: {}".format(self._input_dimensions))
+        print(("Number of observations per state: {}".format(len(self.states_shared))))
+        print(("For each observation, historySize + ponctualObs_i.shape: {}".format(self._input_dimensions)))
                 
         rewards = T.col('rewards')
         actions = T.icol('actions')
@@ -94,7 +94,7 @@ class MyQNetwork(QNetwork):
         Q_net=neural_network(self._batch_size, self._input_dimensions, self._n_actions, self._random_state)
         self.q_vals, self.params, shape_after_conv = Q_net._buildDQN(states)
         
-        print("Number of neurons after spatial and temporal convolution layers: {}".format(shape_after_conv))
+        print(("Number of neurons after spatial and temporal convolution layers: {}".format(shape_after_conv)))
 
         self.next_q_vals, self.next_params, shape_after_conv = Q_net._buildDQN(next_states)
         self._resetQHat()
@@ -181,7 +181,7 @@ class MyQNetwork(QNetwork):
             updates = deepmind_rmsprop(loss, self.params, gparams, thelr, self._rho,
                                        self._rms_epsilon)
         elif update_rule == 'rmsprop':
-            for i,(p, g) in enumerate(zip(self.params, gparams)):                
+            for i,(p, g) in enumerate(list(zip(self.params, gparams))):                
                 acc = theano.shared(p.get_value() * 0.)
                 acc_new = rho * acc + (1 - self._rho) * g ** 2
                 gradient_scaling = T.sqrt(acc_new + self._rms_epsilon)
@@ -190,7 +190,7 @@ class MyQNetwork(QNetwork):
                 updates.append((p, p - thelr * g))
 
         elif update_rule == 'sgd':
-            for i, (param, gparam) in enumerate(zip(self.params, gparams)):
+            for i, (param, gparam) in enumerate(list(zip(self.params, gparams))):
                 updates.append((param, param - thelr * gparam))
         else:
             raise ValueError("Unrecognized update: {}".format(update_rule))
@@ -309,6 +309,6 @@ class MyQNetwork(QNetwork):
         return np.argmax(q_vals),np.max(q_vals)
 
     def _resetQHat(self):
-        for i,(param,next_param) in enumerate(zip(self.params, self.next_params)):
+        for i,(param,next_param) in enumerate(list(zip(self.params, self.next_params))):
             next_param.set_value(param.get_value())        
 

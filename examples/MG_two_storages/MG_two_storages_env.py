@@ -60,12 +60,12 @@ class MyEnv(Environment):
 
         self.min_consumption=min(self.consumption_train)
         self.max_consumption=max(self.consumption_train)
-        print("Sample of the consumption profile (kW): {}".format(self.consumption_train[0:24]))
-        print("Min of the consumption profile (kW): {}".format(self.min_consumption))
-        print("Max of the consumption profile (kW): {}".format(self.max_consumption))
-        print("Average consumption per day train (kWh): {}".format(np.sum(self.consumption_train)/self.consumption_train.shape[0]*24))
-        print("Average consumption per day valid (kWh): {}".format(np.sum(self.consumption_valid)/self.consumption_valid.shape[0]*24))
-        print("Average consumption per day test (kWh): {}".format(np.sum(self.consumption_test)/self.consumption_test.shape[0]*24))
+        print(("Sample of the consumption profile (kW): {}".format(self.consumption_train[0:24])))
+        print(("Min of the consumption profile (kW): {}".format(self.min_consumption)))
+        print(("Max of the consumption profile (kW): {}".format(self.max_consumption)))
+        print(("Average consumption per day train (kWh): {}".format(np.sum(self.consumption_train)/self.consumption_train.shape[0]*24)))
+        print(("Average consumption per day valid (kWh): {}".format(np.sum(self.consumption_valid)/self.consumption_valid.shape[0]*24)))
+        print(("Average consumption per day test (kWh): {}".format(np.sum(self.consumption_test)/self.consumption_test.shape[0]*24)))
 
         # Get production profile in W/Wp in [0,1]
         self.production_train_norm=np.load("data/BelgiumPV_prod_train.npy")[0:1*365*24]
@@ -78,12 +78,12 @@ class MyEnv(Environment):
 
         self.min_production=min(self.production_train)
         self.max_production=max(self.production_train)
-        print("Sample of the production profile (kW): {}".format(self.production_train[0:24]))
-        print("Min of the production profile (kW): {}".format(self.min_production))
-        print("Max of the production profile (kW): {}".format(self.max_production))
-        print("Average production per day train (kWh): {}".format(np.sum(self.production_train)/self.production_train.shape[0]*24))
-        print("Average production per day valid (kWh): {}".format(np.sum(self.production_valid)/self.production_valid.shape[0]*24))
-        print("Average production per day test (kWh): {}".format(np.sum(self.production_test)/self.production_test.shape[0]*24))
+        print(("Sample of the production profile (kW): {}".format(self.production_train[0:24])))
+        print(("Min of the production profile (kW): {}".format(self.min_production)))
+        print(("Max of the production profile (kW): {}".format(self.max_production)))
+        print(("Average production per day train (kWh): {}".format(np.sum(self.production_train)/self.production_train.shape[0]*24)))
+        print(("Average production per day valid (kWh): {}".format(np.sum(self.production_valid)/self.production_valid.shape[0]*24)))
+        print(("Average production per day test (kWh): {}".format(np.sum(self.production_test)/self.production_test.shape[0]*24)))
 
         self.battery_size=15.*inc_sizing
         self.battery_eta=0.9
@@ -220,7 +220,7 @@ class MyEnv(Environment):
 
     def summarizePerformance(self, test_data_set):
         print("summary perf")
-        print("self.hydrogen_storage: {}".format(self.hydrogen_storage))
+        print(("self.hydrogen_storage: {}".format(self.hydrogen_storage)))
         observations = test_data_set.observations()
         aaa = test_data_set.actions()
         rewards = test_data_set.rewards()
@@ -251,7 +251,7 @@ def main():
     rng = np.random.RandomState(123456)
     myenv=MyEnv(rng)
 
-    print (myenv.observe())
+    print((myenv.observe()))
     
 if __name__ == "__main__":
     main()

@@ -82,7 +82,7 @@ class MyEnv(Environment):
     def summarizePerformance(self, test_data_set):
         if self.inTerminalState() == False:
             self._mode_episode_count += 1
-        print("== Mean score per episode is {} over {} episodes ==".format(self._mode_score / self._mode_episode_count, self._mode_episode_count))
+        print(("== Mean score per episode is {} over {} episodes ==".format(self._mode_score / self._mode_episode_count, self._mode_episode_count)))
 
 
     def inputDimensions(self):

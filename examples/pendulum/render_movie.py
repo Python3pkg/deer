@@ -78,8 +78,8 @@ def save_mp4(data, n):
             fig.savefig('img/_tmp%03d.png' % frame_number)
             frame_number += 1
 
-    print(os.system("ffmpeg -framerate 25 -i img/_tmp%03d.png "  \
-          + "-c:v libx264 -pix_fmt yuv420p video/out" + str(n) + ".mp4"))
+    print((os.system("ffmpeg -framerate 25 -i img/_tmp%03d.png "  \
+          + "-c:v libx264 -pix_fmt yuv420p video/out" + str(n) + ".mp4")))
 
     return
 
